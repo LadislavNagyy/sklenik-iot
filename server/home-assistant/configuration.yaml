@@ -6,7 +6,7 @@ mqtt:
   sensor:
     - name: "Sklenik - Teplota"
       unique_id: sklenik_temperature
-      state_topic: "sklenik/temperature"
+      state_topic: "fei/sklenik/temperature"
       value_template: "{{ value_json.value }}"
       unit_of_measurement: "°C"
       device_class: temperature
@@ -14,7 +14,7 @@ mqtt:
 
     - name: "Sklenik - Tlak vzduchu"
       unique_id: sklenik_pressure
-      state_topic: "sklenik/pressure"
+      state_topic: "fei/sklenik/pressure"
       value_template: "{{ value_json.value }}"
       unit_of_measurement: "hPa"
       device_class: atmospheric_pressure
@@ -22,22 +22,25 @@ mqtt:
 
     - name: "Sklenik - Vlhkost pody"
       unique_id: sklenik_soil_moisture
-      state_topic: "sklenik/soil_moisture"
+      state_topic: "fei/sklenik/soil_moisture"
       value_template: "{{ value_json.value }}"
       unit_of_measurement: "%"
       state_class: measurement
 
     - name: "Sklenik - Intenzita svetla"
       unique_id: sklenik_light
-      state_topic: "sklenik/light"
+      state_topic: "fei/sklenik/light"
       value_template: "{{ value_json.value }}"
       unit_of_measurement: "%"
       state_class: measurement
 
-    - name: "Sklenik - Napatie baterie"
-      unique_id: sklenik_battery
-      state_topic: "sklenik/battery"
-      value_template: "{{ value_json.value }}"
-      unit_of_measurement: "V"
-      device_class: voltage
+    - name: "Sklenik - Cerpadlo"
+      unique_id: sklenik_pump
+      state_topic: "fei/sklenik/pump"
+      value_template: "{{ value_json.value | int }}"
       state_class: measurement
+
+    - name: "Sklenik - Log"
+      unique_id: sklenik_log
+      state_topic: "fei/sklenik/log"
+      value_template: "{{ value_json.msg }}"
