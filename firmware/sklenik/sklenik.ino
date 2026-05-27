@@ -23,6 +23,7 @@
 #define PUMPA_ZAPNUT_ADC          2200
 #define PUMPA_DOBA_MS             5000
 #define PUMPA_MIN_INTERVAL_CYKLOV    5
+#define PUMPA_STARTOVACI_CYKLUS      3
 
 // Prezivu deep sleep v RTC pamati
 RTC_DATA_ATTR uint32_t cislo_spravy          = 0;
@@ -119,26 +120,33 @@ void setup() {
 
   // Cerpadlo: fixny cas behu + cooldown chrani pred zlyhanim senzora
   paket.pumpa_zapnuta = 0;
-  uint32_t cyklov_od_pumpy = cislo_spravy - cislo_poslednej_pumpy;
-  bool cooldown_ok = (cislo_poslednej_pumpy == 0) || (cyklov_od_pumpy >= PUMPA_MIN_INTERVAL_CYKLOV);
 
-  if (paket.adc_poda > PUMPA_ZAPNUT_ADC && cooldown_ok) {
-    Serial.print("  [PUMPA] Sucha poda (adc="); Serial.print(paket.adc_poda);
-    Serial.println(") - zapinam cerpadlo");
-    digitalWrite(PIN_PUMPA, HIGH);
-    unsigned long start = millis();
-    while (millis() - start < PUMPA_DOBA_MS) {
-      esp_task_wdt_reset();
-      delay(100);
+  if (cislo_spravy <= PUMPA_STARTOVACI_CYKLUS) {
+    Serial.print("  [PUMPA] Startup ochrana (cyklus ");
+    Serial.print(cislo_spravy); Serial.print("/");
+    Serial.print(PUMPA_STARTOVACI_CYKLUS); Serial.println(")");
+  } else {
+    uint32_t cyklov_od_pumpy = cislo_spravy - cislo_poslednej_pumpy;
+    bool cooldown_ok = (cislo_poslednej_pumpy == 0) || (cyklov_od_pumpy >= PUMPA_MIN_INTERVAL_CYKLOV);
+
+    if (paket.adc_poda > PUMPA_ZAPNUT_ADC && cooldown_ok) {
+      Serial.print("  [PUMPA] Sucha poda (adc="); Serial.print(paket.adc_poda);
+      Serial.println(") - zapinam cerpadlo");
+      digitalWrite(PIN_PUMPA, HIGH);
+      unsigned long start = millis();
+      while (millis() - start < PUMPA_DOBA_MS) {
+        esp_task_wdt_reset();
+        delay(100);
+      }
+      digitalWrite(PIN_PUMPA, LOW);
+      cislo_poslednej_pumpy = cislo_spravy;
+      paket.pumpa_zapnuta = 1;
+      Serial.println("  [PUMPA] Vypnute");
+    } else if (paket.adc_poda > PUMPA_ZAPNUT_ADC && !cooldown_ok) {
+      Serial.print("  [PUMPA] Cooldown (zostatok=");
+      Serial.print(PUMPA_MIN_INTERVAL_CYKLOV - cyklov_od_pumpy);
+      Serial.println(" cyklov)");
     }
-    digitalWrite(PIN_PUMPA, LOW);
-    cislo_poslednej_pumpy = cislo_spravy;
-    paket.pumpa_zapnuta = 1;
-    Serial.println("  [PUMPA] Vypnute");
-  } else if (paket.adc_poda > PUMPA_ZAPNUT_ADC && !cooldown_ok) {
-    Serial.print("  [PUMPA] Cooldown (zostatok=");
-    Serial.print(PUMPA_MIN_INTERVAL_CYKLOV - cyklov_od_pumpy);
-    Serial.println(" cyklov)");
   }
 
   Serial.print("  T="); Serial.print(paket.teplota, 2); Serial.println(" C");
