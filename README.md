@@ -1,59 +1,152 @@
-# Sklenik IoT
+# Sklenik IoT — Distribuovany system monitorovania sklenika
 
-Distribuovany system monitorovania sklenika pomocou LoRa komunikacie a Home Assistant.
+Semestralne zadanie MISA — FEI STU Bratislava
 
 ## Architektura systemu
 
 ```
-[ESP32 - Sklenik]  ---LoRa---  [ESP8266 - Vnutorna jednotka]  ---MQTT---  [Home Assistant na RPi 3B]
-  - senzory                       - prijima data                             - vizualizacia
-  - aktuatory                     - preposielanie na HA                      - dashboard
-  - bateriove napajanie
+[ESP32 - Sklenik]  ---LoRa 868MHz---  [ESP8266 - Dom]  ---WiFi/MQTT---  [Raspberry Pi 3B]
+  BMP280 (T, P)       DX-LR02 x2       gateway uzol        Mosquitto       Home Assistant
+  senzor pody                           MQTT klient         broker          dashboard
+  fotoodpor
+  cerpadlo 12V
+  bateria 12V 7Ah
 ```
 
-## Pouzity hardver
+Sklenikovy uzol (ESP32) sa prebudi z deep sleepu, zmeria vsetky veliciny, zapne cerpadlo
+ak je potreba a odosle sifrovany LoRa paket. Vnutorna jednotka (ESP8266) paket prijme,
+overi checksum, dessifruje a publikuje jednotlive veliciny na MQTT broker. Home Assistant
+na RPi vizualizuje data a uklada historiu.
 
-| Komponent | Popis |
-|-----------|-------|
-| ESP32 | Hlavny uzol sklenika (senzory + aktuatory) |
-| ESP8266 | Vnutorna prijimacia jednotka |
-| DX-LR02 900T22D (x2) | LoRa moduly, transparentny rezim |
-| Raspberry Pi 3B | Server - bezi Home Assistant |
-| 12V 7Ah bateria | Napajanie sklenikoveho modulu |
-| DC-DC menic | Konverzia 12V -> 3.3V pre ESP32 |
+## Hardver
 
-## Senzory
+| Komponent | Popis | Uzol |
+|-----------|-------|------|
+| ESP32 DevKit | MCU sklenikoveho uzla | sklenik |
+| ESP8266 NodeMCU | MCU vnutornej jednotky | dom |
+| DX-LR02 900T22D (x2) | LoRa moduly, transparentny UART rezim, 868 MHz | oba |
+| BMP280 | Teplota (-40..85°C) a tlak (300..1100 hPa), I2C | sklenik |
+| Kapacitny senzor vlhkosti pody | Analogovy, 12-bit ADC, kalibrovany | sklenik |
+| Fotoodpor + delit napatia | Intenzita svetla, analogovy, 12-bit ADC, kalibrovany | sklenik |
+| Vodne cerpadlo 12V | Automaticke polievanie | sklenik |
+| Rele / MOSFET | Spinanie cerpadla z GPIO25 | sklenik |
+| 12V 7Ah bateria | Napajanie sklenikoveho uzla | sklenik |
+| DC-DC menic 12V→3.3V | Napajanie ESP32 | sklenik |
+| Raspberry Pi 3B | MQTT broker + Home Assistant | server |
 
-*(bude doplnene)*
+## Senzory a kalibrácia
 
-## MQTT topiky
+### BMP280 (kategoria A — digitálny, I2C)
+- Teplota: rozsah -40 až 85 °C, offset korekcia -2.7 °C (merany rozdiel voči referenciemu teplomeru)
+- Tlak: rozsah 300 až 1100 hPa
+- Rezim: forced mode — jedno meranie, potom senzor zaspi (uspori energiu)
 
-| Topik | Velicina | Jednotka |
-|-------|----------|----------|
-| `sklenik/temperature` | Teplota | °C |
-| `sklenik/humidity` | Relativna vlhkost | % |
+### Kapacitny senzor vlhkosti pody (kategoria B — analogovy, ADC, kalibracia)
+- Kalibracne body: sucha poda ADC=2212 → 0 %, mokra poda ADC=1372 → 100 %
+- Napajanie: GPIO13, zapinate len pocas merania (150 ms)
+- Priemer z 10 vzoriek (50 ms rozostup)
 
-*(bude doplnene podla finalneho zoznamu senzorov)*
+### Fotoodpor (kategoria B — analogovy, ADC, kalibracia)
+- Kalibracne body: tma ADC=0 → 0 %, plne svetlo ADC=2968 → 100 %
+- Napajanie: GPIO14, zapinate len pocas merania
+- Pouzity na nocnu ochranu cerpadla (pod 20 % sa nepolieva)
 
-## JSON format sprav
+## MQTT Topiky
+
+Vsetky topiky su v hierarchii `fei/<uzol>/<velicina>`. Spravy su publikovane s `retain=true`
+(okrem logu). ESP8266 sa prihlasuje pod uzivatelom `mqtt_iot`, Home Assistant pod `homeassistant`.
+
+| Topik | Velicina | Jednotka | Senzor | retain |
+|-------|----------|----------|--------|--------|
+| `fei/sklenik/temperature` | Teplota vzduchu | °C | BMP280 | true |
+| `fei/sklenik/pressure` | Atmosfericky tlak | hPa | BMP280 | true |
+| `fei/sklenik/soil_moisture` | Vlhkost pody | % | kapacitny senzor | true |
+| `fei/sklenik/light` | Intenzita svetla | % | fotoodpor | true |
+| `fei/sklenik/pump` | Stav cerpadla | 0/1 | aktuator | true |
+| `fei/sklenik/status` | Stav uzla (LWT) | online/offline | — | true |
+| `fei/sklenik/log` | Debug log sprava | text | ESP8266 | false |
+
+## JSON format správ
+
+Vsetky merania su publikovane v tomto formate:
 
 ```json
 {
-  "value": 23.4,
-  "unit": "C",
-  "ts": 1714000000,
+  "value": 23.45,
+  "unit": "°C",
+  "ts": 1748000000,
   "node": "sklenik",
-  "sensor": "DHT22"
+  "sensor": "BMP280"
 }
 ```
 
-## Instalacia a spustenie
+| Pole | Typ | Popis |
+|------|-----|-------|
+| `value` | float | Namerena hodnota |
+| `unit` | string | Fyzikalna jednotka |
+| `ts` | uint32 | Unix timestamp (NTP, UTC+1+DST) |
+| `node` | string | Identifikator uzla |
+| `sensor` | string | Identifikator senzora |
 
-*(bude doplnene)*
+Log sprava (`fei/sklenik/log`):
+```json
+{"msg": "paket #42 T=23.5C P=1013hPa poda=61% svetlo=78% pumpa=0 chyby=0x00 reset=8", "ts": 1748000000, "node": "dom"}
+```
+
+## Perioda merania — odovodnenie (kritérium 3.2)
+
+ESP32 sa prebudi raz za **60 sekund** (produkcia; testovanie: 10 s). Tato perioda je
+zvolena z nasledujucich dovodov:
+
+- **BMP280**: teplota a tlak sa v skleniku menia pomaly (tepelna casova konstanta radu
+  minut). 60 s je postacujuce na zachytenie vsetkych relevantnych trendov.
+- **Vlhkost pody**: kapacitny senzor reaguje pomaly (voda sa vsaka do substrátu). Zmena
+  o 1 % trva minute az hodiny. 60 s je dostacujuce.
+- **Bateria**: deep sleep spotreba ESP32 je ~10 µA. Pri 60 s periode je uzol aktívny cca
+  3 s (meranie + LoRa odoslanie) a spi 57 s. Podiel aktivnej doby < 5 %, co predlzuje
+  zivotnost 7Ah baterie na tyzdne.
+- **LoRa prenosova kapacita**: DX-LR02 v transparentnom rezime, paket 23 bajtov,
+  9600 baud. Jedno odoslanie trva < 30 ms. Perioda 60 s je bez problemov.
+
+## Instalacny navod
+
+Pozri `server/SETUP.md` — kompletny postup od cistej instalacie OS po spusteny dashboard.
+
+Strucny prehlad:
+1. Naflashovat **Home Assistant OS** na SD kartu pomocou Raspberry Pi Imager
+2. Bootovat RPi — HA dostupny na `http://homeassistant.local:8123`
+3. Nainstaovat **Mosquitto broker** add-on (Settings → Add-ons), pridat login `mqtt_iot`
+4. Nainstaovat **File Editor** add-on, upravit `/config/configuration.yaml` podla `server/home-assistant/configuration.yaml`
+5. Settings → System → Restart (Core)
+6. HA Recorder automaticky uklada vsetky entity (SQLite, predvolene 10 dni)
 
 ## Pristup na dashboard
 
-Home Assistant bezi na `http://<IP-adresa-RPi>:8123`
+- **Lokalna siet**: `http://192.168.1.228:8123`
+- **Verejny pristup**: port forwarding port 8123 na routeri, alebo Nabu Casa cloud
 
----
-*Semestralne zadanie - MISA - FEI*
+## Struktura repozitara
+
+```
+vypracovanie/
+  firmware/
+    sklenik/          # ESP32 — sklenikovy uzol
+      sklenik.ino
+      config.h        # spolocna konfiguracia (topics, struct, klic)
+    dom/              # ESP8266 — vnutorna jednotka
+      dom.ino
+      config.h        # identicky subor ako sklenik/config.h
+  server/
+    mosquitto/
+      mosquitto.conf  # konfiguracia brokera (bez hesiel)
+      acl             # opravnenia uzlov
+    home-assistant/
+      configuration.yaml   # MQTT senzory pre HA
+    SETUP.md          # kompletny instalacny navod
+  docs/
+    wiring_sklenik.md # schema zapojenia ESP32 uzla
+    wiring_dom.md     # schema zapojenia ESP8266 uzla
+  README.md
+zadanie/
+  rubrics_iot_projekt.pdf
+```

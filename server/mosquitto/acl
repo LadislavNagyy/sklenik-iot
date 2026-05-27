@@ -1,0 +1,10 @@
+# Mosquitto ACL - opravnenia uzlov na MQTT topiky
+# Subor /etc/mosquitto/acl na Raspberry Pi
+
+# esp8266 (dom) - publikuje merania, cita status
+user mqtt_iot
+topic readwrite fei/#
+
+# Home Assistant - cita vsetko
+user homeassistant
+topic read fei/#
