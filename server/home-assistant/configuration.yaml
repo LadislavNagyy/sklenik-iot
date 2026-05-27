@@ -1,0 +1,43 @@
+# MQTT sensor entities for sklenik IoT project
+# Add this mqtt: block to /config/configuration.yaml on Home Assistant
+# Then restart HA (Settings -> System -> Restart)
+
+mqtt:
+  sensor:
+    - name: "Sklenik - Teplota"
+      unique_id: sklenik_temperature
+      state_topic: "sklenik/temperature"
+      value_template: "{{ value_json.value }}"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Sklenik - Tlak vzduchu"
+      unique_id: sklenik_pressure
+      state_topic: "sklenik/pressure"
+      value_template: "{{ value_json.value }}"
+      unit_of_measurement: "hPa"
+      device_class: atmospheric_pressure
+      state_class: measurement
+
+    - name: "Sklenik - Vlhkost pody"
+      unique_id: sklenik_soil_moisture
+      state_topic: "sklenik/soil_moisture"
+      value_template: "{{ value_json.value }}"
+      unit_of_measurement: "%"
+      state_class: measurement
+
+    - name: "Sklenik - Intenzita svetla"
+      unique_id: sklenik_light
+      state_topic: "sklenik/light"
+      value_template: "{{ value_json.value }}"
+      unit_of_measurement: "%"
+      state_class: measurement
+
+    - name: "Sklenik - Napatie baterie"
+      unique_id: sklenik_battery
+      state_topic: "sklenik/battery"
+      value_template: "{{ value_json.value }}"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
