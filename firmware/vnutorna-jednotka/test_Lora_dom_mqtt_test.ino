@@ -9,7 +9,7 @@
 #define WIFI_PASSWORD   "..."
 
 // MQTT broker - Home Assistant on Raspberry Pi
-#define MQTT_BROKER     "homeassistant.local"
+#define MQTT_BROKER     "192.168.1.228"
 #define MQTT_PORT       1883
 #define MQTT_USER       "..."
 #define MQTT_PASSWORD   "..."
@@ -35,6 +35,7 @@
 #define SOIL_DRY_ADC    2500
 #define SOIL_WET_ADC    1300
 
+
 SoftwareSerial LoRaSerial(LORA_RX_PIN, LORA_TX_PIN);
 
 WiFiClient   wifiClient;
@@ -54,13 +55,17 @@ struct __attribute__((__packed__)) TelemetryData {
 void connectWifi() {
   if (WiFi.status() == WL_CONNECTED) return;
 
-  WiFi.persistent(false);   
-  WiFi.disconnect(true);   
-  delay(100);
+  // Uplne vypneme radio, aby sme zrusili staru asociaciu v routeri
+  WiFi.disconnect(true);
+  delay(500);
+  WiFi.mode(WIFI_OFF);
+  delay(5000);
+
+  // DHCP - router prideluje IP podla MAC rezervacie
+  WiFi.mode(WIFI_STA);
 
   Serial.print("[WiFi] Connecting to: ");
   Serial.println(WIFI_SSID);
-  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   int attempts = 0;
@@ -115,10 +120,13 @@ void publishSensor(const char* topic, float value, const char* unit, const char*
 }
 
 void setup() {
+  // persistent(false) musi byt uplne prve volanie WiFi, inak nacita stare udaje z flash
+  WiFi.persistent(false);
+
   Serial.begin(115200);
   delay(100);
   Serial.print("MAC adresa: ");
-  Serial.println(WiFi.macAddress()); 
+  Serial.println(WiFi.macAddress());
   LoRaSerial.begin(9600);
 
   mqttClient.setBufferSize(256);
