@@ -5,8 +5,8 @@
 // POZOR: tento subor musi byt identicky v priecinku sklenik/ aj dom/
 
 // Interval deep sleep [mikrosekundy]
-// Testovanie: 10 000 000 (10s), produkcia: 60 000 000 (60s) alebo 300 000 000 (5min)
-#define SLEEP_INTERVAL_US  10000000ULL
+// Testovanie: 10 000 000 (10s), produkcia: 60 000 000 (60s) alebo 3 600 000 000 (1h)
+#define SLEEP_INTERVAL_US  3600000000ULL
 
 // Synchronizacny bajt - zaciatok paketu (nesifruje sa, sluzi na detekciu)
 #define PACKET_HEADER  0xFF

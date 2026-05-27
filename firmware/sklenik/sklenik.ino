@@ -166,13 +166,18 @@ void setup() {
   delay(500);
   esp_task_wdt_reset();
 
+  // Checksum a sifrovanie - raz pred odoslanim
   paket.checksum = vypocitajChecksum(&paket);
   xorCipher(&paket);
-  LoRaSerial.write((uint8_t*)&paket, sizeof(paket));
-  LoRaSerial.flush();
-  delay(200);
 
-  Serial.println("  -> odoslane");
+  // Odoslanie az 5-krat - zvysuje sance ze aspon jeden paket prebehne bez chyby
+  for (int pokus = 1; pokus <= 5; pokus++) {
+    LoRaSerial.write((uint8_t*)&paket, sizeof(paket));
+    LoRaSerial.flush();
+    Serial.print("  -> odoslane (pokus "); Serial.print(pokus); Serial.println("/5)");
+    esp_task_wdt_reset();
+    if (pokus < 5) delay(600);
+  }
   Serial.print("[SLEEP] Uspinam na ");
   Serial.print(SLEEP_INTERVAL_US / 1000000ULL);
   Serial.println(" s...");
