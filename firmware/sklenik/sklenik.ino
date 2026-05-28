@@ -25,11 +25,11 @@
 #define TEPLOTA_OFFSET  -2.7f    // offset BMP280 vs referencny teplomer [C]
 
 // Cerpadlo - prahove hodnoty a ochranné limity
-#define PUMPA_ZAPNUT_ADC          2050  // sucha poda (kapacitny senzor, ~20% vlhkosti)
-#define PUMPA_DOBA_MS             5000  // max. doba behu cerpadla na jeden cyklus
+#define PUMPA_ZAPNUT_ADC          1700  // prah polievania (kalibracia: sucha=2015, mokra=1434)
+#define PUMPA_DOBA_MS            10000  // max. doba behu cerpadla na jeden cyklus
 #define PUMPA_MIN_INTERVAL_CYKLOV    5  // min. cyklov medzi aktivaciami
 #define PUMPA_STARTOVACI_CYKLUS      3  // prvy N cyklov po flashovani sa pumpa ignoruje
-#define PUMPA_MIN_SVETLO_ADC       594  // min. svetlo pre polievanie (~20%, nepolieva v noci)
+#define PUMPA_MIN_SVETLO_ADC       862  // min. svetlo pre polievanie (~20%, kalibracia: max=4311)
 
 // Pretrvavaju cez deep sleep v RTC pamati
 RTC_DATA_ATTR uint32_t cislo_spravy          = 0;

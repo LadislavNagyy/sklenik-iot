@@ -23,12 +23,12 @@
 #define NTP_DST_OFFSET  3600
 
 // Kalibrovane hodnoty senzora vlhkosti pody (kapacitny, 12-bit ADC)
-#define SOIL_DRY_ADC  2212   // sucha poda -> 0%
-#define SOIL_WET_ADC  1372   // mokra poda -> 100%
+#define SOIL_DRY_ADC  2015   // sucha poda -> 0% (kalibracia: max namerany 2015)
+#define SOIL_WET_ADC  1434   // mokra poda -> 100% (kalibracia: uplne mokra 1434)
 
 // Kalibrovane hodnoty fotoodporu (12-bit ADC)
 #define LIGHT_DARK_ADC    0  // tma -> 0%
-#define LIGHT_BRIGHT_ADC  2968  // plne svetlo -> 100%
+#define LIGHT_BRIGHT_ADC  4311  // plne slnko -> 95% pri ADC=4095 (kalibracia: vonku bez oblakov)
 
 // Staticka IP - router drzi staru asociaciu 5s po resete
 IPAddress STATIC_IP(192, 168, 1, 100);
