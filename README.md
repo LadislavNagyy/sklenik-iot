@@ -95,18 +95,20 @@ Log sprava (`fei/sklenik/log`):
 
 ## Perioda merania — odovodnenie (kritérium 3.2)
 
-ESP32 sa prebudi raz za **60 sekund** (produkcia; testovanie: 10 s). Tato perioda je
+ESP32 sa prebudi raz za **1 hodinu** (`SLEEP_INTERVAL_US = 3 600 000 000 µs`). Tato perioda je
 zvolena z nasledujucich dovodov:
 
 - **BMP280**: teplota a tlak sa v skleniku menia pomaly (tepelna casova konstanta radu
-  minut). 60 s je postacujuce na zachytenie vsetkych relevantnych trendov.
-- **Vlhkost pody**: kapacitny senzor reaguje pomaly (voda sa vsaka do substrátu). Zmena
-  o 1 % trva minute az hodiny. 60 s je dostacujuce.
-- **Bateria**: deep sleep spotreba ESP32 je ~10 µA. Pri 60 s periode je uzol aktívny cca
-  3 s (meranie + LoRa odoslanie) a spi 57 s. Podiel aktivnej doby < 5 %, co predlzuje
-  zivotnost 7Ah baterie na tyzdne.
+  minut az desiatok minut). 1 hodina postacuje na zachytenie vsetkych relevantnych trendov
+  v uzavrenom skleniku.
+- **Vlhkost pody**: kapacitny senzor reaguje pomaly — voda sa vsaka do substratu v radoch
+  minut az hodin. Zmena o 1 % trva typicky hodiny, meranie raz za hodinu je dostacujuce.
+- **Bateria**: deep sleep spotreba ESP32 je ~10 µA, DC-DC konvertor ~3 mA. Pri 1-hodinovej
+  periode je uzol aktivny ~5 s a spi 3595 s. Priemerny odber z 12V baterie ~3.1 mA,
+  zivotnost 7Ah baterie ~75 dni (~2.5 mesiaca).
 - **LoRa prenosova kapacita**: DX-LR02 v transparentnom rezime, paket 23 bajtov,
-  9600 baud. Jedno odoslanie trva < 30 ms. Perioda 60 s je bez problemov.
+  9600 baud. Kazdy cyklus posiela paket 5-krat (ochrana pred RF chybami), celkovo < 4 s.
+  Perioda 1 hodina je bez problemov.
 
 ## Instalacny navod
 
