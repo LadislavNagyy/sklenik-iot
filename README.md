@@ -152,7 +152,7 @@ Strucny prehlad:
 ## Pristup na dashboard
 
 - **Lokalna siet**: `http://192.168.1.228:8123`
-- **Verejny pristup**: pomocou Tailscale
+- **Verejny pristup**: pomocou Tailscale VPN
 
 ## Struktura repozitara
 
@@ -176,6 +176,4 @@ vypracovanie/
     wiring_sklenik.md # schema zapojenia ESP32 uzla
     wiring_dom.md     # schema zapojenia ESP8266 uzla
   README.md
-zadanie/
-  rubrics_iot_projekt.pdf
 ```
