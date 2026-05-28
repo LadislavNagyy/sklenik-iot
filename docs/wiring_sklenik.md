@@ -62,10 +62,10 @@ GND           ESP32 GND
 
 | Senzor | Podmienka | ADC hodnota | Fyzikálna hodnota |
 |--------|-----------|-------------|-------------------|
-| Kapacitný senzor pôdy | Suchá pôda | 2212 | 0% vlhkosť |
-| Kapacitný senzor pôdy | Mokrá pôda | 1372 | 100% vlhkosť |
+| Kapacitný senzor pôdy | Suchá pôda | 2015 | 0% vlhkosť |
+| Kapacitný senzor pôdy | Mokrá pôda | 1434 | 100% vlhkosť |
 | Fotoodpor | Tma | 0 | 0% intenzita |
-| Fotoodpor | Plné svetlo | 2968 | 100% intenzita |
+| Fotoodpor | Plné slnko (vonku, bez oblakov) | 4095 | ~95% intenzita (ref. 4311 → 100%) |
 | BMP280 | Offset voči ref. teplomeru | −2.7 °C | korekcia v kóde |
 
 Kalibrácia vykonaná s 12-bit ADC (0–4095). Lineárna interpolácia funkciou `map()`.

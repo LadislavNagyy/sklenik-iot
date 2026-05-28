@@ -42,12 +42,12 @@ na RPi vizualizuje data a uklada historiu.
 - Rezim: forced mode — jedno meranie, potom senzor zaspi 
 
 ### Kapacitny senzor vlhkosti pody (kategoria B — analogovy, ADC, kalibracia)
-- Kalibracne body: sucha poda ADC=2212 → 0 %, mokra poda ADC=1372 → 100 %
+- Kalibracne body: sucha poda ADC=2015 → 0 %, mokra poda ADC=1434 → 100 %
 - Napajanie: GPIO13, zapinate len pocas merania (150 ms)
 - Priemer z 10 vzoriek (50 ms rozostup)
 
 ### Fotoodpor (kategoria B — analogovy, ADC, kalibracia)
-- Kalibracne body: tma ADC=0 → 0 %, plne svetlo ADC=2968 → 100 %
+- Kalibracne body: tma ADC=0 → 0 %, plne slnko (vonku, bez oblakov) ADC=4095 → ~95 % (referencna hodnota 4311 → 100 %)
 - Napajanie: GPIO14, zapinate len pocas merania
 - Pouzity na nocnu ochranu cerpadla (pod 20 % sa nepolieva)
 
@@ -157,23 +157,26 @@ Strucny prehlad:
 ## Struktura repozitara
 
 ```
-vypracovanie/
-  firmware/
-    sklenik/          # ESP32 — sklenikovy uzol
-      sklenik.ino
-      config.h        # spolocna konfiguracia (topics, struct, klic)
-    dom/              # ESP8266 — vnutorna jednotka
-      dom.ino
-      config.h        # identicky subor ako sklenik/config.h
-  server/
-    mosquitto/
-      mosquitto.conf  # konfiguracia brokera (bez hesiel)
-      acl             # opravnenia uzlov
-    home-assistant/
-      configuration.yaml   # MQTT senzory pre HA
-    SETUP.md          # kompletny instalacny navod
-  docs/
-    wiring_sklenik.md # schema zapojenia ESP32 uzla
-    wiring_dom.md     # schema zapojenia ESP8266 uzla
-  README.md
+firmware/
+  sklenik/            # ESP32 — sklenikovy uzol
+    sklenik.ino
+    config.h          # spolocna konfiguracia (topics, struct, klic)
+  dom/                # ESP8266 — vnutorna jednotka
+    dom.ino
+    config.h          # identicky subor ako sklenik/config.h
+server/
+  mosquitto/
+    mosquitto.conf    # konfiguracia brokera (bez hesiel)
+    acl               # opravnenia uzlov
+  home-assistant/
+    configuration.yaml  # MQTT senzory pre HA
+  SETUP.md            # kompletny instalacny navod
+docs/
+  wiring_sklenik.md   # schema zapojenia ESP32 uzla
+  wiring_dom.md       # schema zapojenia ESP8266 uzla
+  schema_sklenik.png  # foto/schematicke zapojenie ESP32
+  schema_dom.png      # foto/schematicke zapojenie ESP8266
+  topics.md           # kompletna dokumentacia MQTT topikov
+README.md
+.gitignore
 ```
