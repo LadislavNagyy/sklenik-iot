@@ -1,4 +1,4 @@
-# Sklenik IoT — Distribuovany system monitorovania sklenika
+# Sklenik IoT — MISA
 
 Semestralne zadanie MISA — FEI STU Bratislava
 
@@ -13,9 +13,9 @@ Semestralne zadanie MISA — FEI STU Bratislava
   bateria 12V 7Ah
 ```
 
-Sklenikovy uzol (ESP32) sa prebudi z deep sleepu, zmeria vsetky veliciny, zapne cerpadlo
-ak je potreba a odosle sifrovany LoRa paket. Vnutorna jednotka (ESP8266) paket prijme,
-overi checksum, dessifruje a publikuje jednotlive veliciny na MQTT broker. Home Assistant
+Sklenikovy modul (ESP32) sa prebudi zo spánku (deep sleep), zmeria vsetky veliciny, zapne cerpadlo,
+ak je potrebne a odosle sifrovany LoRa paket. Vnutorna jednotka (ESP8266) paket prijme,
+overi checksum, dessifruje a publikuje jednotlive veliciny na MQTT brokera. Home Assistant
 na RPi vizualizuje data a uklada historiu.
 
 ## Hardver
@@ -37,9 +37,9 @@ na RPi vizualizuje data a uklada historiu.
 ## Senzory a kalibrácia
 
 ### BMP280 (kategoria A — digitálny, I2C)
-- Teplota: rozsah -40 až 85 °C, offset korekcia -2.7 °C (merany rozdiel voči referenciemu teplomeru)
+- Teplota: rozsah -40 až 85 °C, offset korekcia -2.7 °C (merany rozdiel voči referencnemu teplomeru)
 - Tlak: rozsah 300 až 1100 hPa
-- Rezim: forced mode — jedno meranie, potom senzor zaspi (uspori energiu)
+- Rezim: forced mode — jedno meranie, potom senzor zaspi 
 
 ### Kapacitny senzor vlhkosti pody (kategoria B — analogovy, ADC, kalibracia)
 - Kalibracne body: sucha poda ADC=2212 → 0 %, mokra poda ADC=1372 → 100 %
@@ -106,17 +106,44 @@ zvolena z nasledujucich dovodov:
 - **Bateria**: deep sleep spotreba ESP32 je ~10 µA, DC-DC konvertor ~3 mA. Pri 1-hodinovej
   periode je uzol aktivny ~5 s a spi 3595 s. Priemerny odber z 12V baterie ~3.1 mA,
   zivotnost 7Ah baterie ~75 dni (~2.5 mesiaca).
-- **LoRa prenosova kapacita**: DX-LR02 v transparentnom rezime, paket 23 bajtov,
-  9600 baud. Kazdy cyklus posiela paket 5-krat (ochrana pred RF chybami), celkovo < 4 s.
-  Perioda 1 hodina je bez problemov.
+- **LoRa moduly**: DX-LR02 v transparentnom rezime, paket 23 bajtov,
+  9600 baud. Kazdy cyklus posiela paket 5-krat (ochrana pred RF chybami), aby sme mali istotu, 
+  ze vnutorna jednotka zachyti vsetky data.
+  Perioda 1 hodina.
+
+## Nahranie firmveru
+
+### Poziadavky
+
+- Arduino IDE 2.x
+- Nainstalovane dosky: **ESP32 by Espressif** a **ESP8266 by ESP8266 Community** (Board Manager)
+- Kniznice (Library Manager): `Adafruit BMP280`, `Adafruit Unified Sensor`, `PubSubClient`
+
+### ESP32 — sklenikovy uzol
+
+1. Otvorit `firmware/sklenik/sklenik.ino` v Arduino IDE
+2. Skontrolovat ze `firmware/sklenik/config.h` je v tom istom priecinku
+3. Nastavit v `dom.ino` svoje WiFi a MQTT udaje (ak sa menia)
+4. Board: **ESP32 Dev Module**, Port: COM/ttyUSB priradeny ESP32
+5. Upload (Ctrl+U)
+6. Serial Monitor (115200 baud) — overit vystup `=== ESP32 prebudenie #1 ===`
+
+### ESP8266 — vnutorna jednotka (dom)
+
+1. Otvorit `firmware/dom/dom.ino` v Arduino IDE
+2. Skontrolovat ze `firmware/dom/config.h` je v tom istom priecinku
+3. Doplnit realne hodnoty `WIFI_SSID`, `WIFI_PASSWORD`, `MQTT_USER`, `MQTT_PASSWORD`
+4. Board: **NodeMCU 1.0 (ESP-12E Module)**, Port: COM/ttyUSB priradeny ESP8266
+5. Upload
+6. Serial Monitor (115200 baud) — overit vystup `=== ESP8266 - Vnutorna jednotka ===`
 
 ## Instalacny navod
 
-Pozri `server/SETUP.md` — kompletny postup od cistej instalacie OS po spusteny dashboard.
+Pozrite `server/SETUP.md` — kompletny postup od cistej instalacie OS po spusteny dashboard.
 
 Strucny prehlad:
 1. Naflashovat **Home Assistant OS** na SD kartu pomocou Raspberry Pi Imager
-2. Bootovat RPi — HA dostupny na `http://homeassistant.local:8123`
+2. Zapnut RPi — HA dostupny na `http://homeassistant.local:8123`
 3. Nainstaovat **Mosquitto broker** add-on (Settings → Add-ons), pridat login `mqtt_iot`
 4. Nainstaovat **File Editor** add-on, upravit `/config/configuration.yaml` podla `server/home-assistant/configuration.yaml`
 5. Settings → System → Restart (Core)
@@ -125,7 +152,7 @@ Strucny prehlad:
 ## Pristup na dashboard
 
 - **Lokalna siet**: `http://192.168.1.228:8123`
-- **Verejny pristup**: port forwarding port 8123 na routeri, alebo Nabu Casa cloud
+- **Verejny pristup**: pomocou Tailscale
 
 ## Struktura repozitara
 
